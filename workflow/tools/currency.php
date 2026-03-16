@@ -511,6 +511,17 @@ class Currency extends CalculateAnything implements CalculatorInterface
 
         $base = $exchange['base'];
         $rates = $exchange['rates'];
+
+        if (!isset($rates[$from]) || !isset($rates[$to])) {
+            $missing = !isset($rates[$from]) ? $from : $to;
+            return [
+                'total' => '',
+                'single' => '',
+                'error' => "{$missing} is not available in the free tier. Add a Fixer API key in workflow settings to enable 160+ currencies.",
+                'reload' => false,
+            ];
+        }
+
         $default_base_currency = $rates[$base];
 
         $new_base_currency = $rates[$from]; //from currency
@@ -725,6 +736,14 @@ class Currency extends CalculateAnything implements CalculatorInterface
             ];
         }
 
+        // Normalize Frankfurter response to Fixer-compatible format
+        // Frankfurter returns {base, date, rates} without a 'success' key
+        if (!isset($rates['success']) && isset($rates['rates'])) {
+            $rates['success'] = true;
+            // Frankfurter omits the base currency from rates; add it as 1.0
+            $rates['rates'][$rates['base']] = 1.0;
+        }
+
         $rates['last_updated'] = time();
 
         if (isset($rates['success']) && $rates['success']) {
@@ -738,72 +757,31 @@ class Currency extends CalculateAnything implements CalculatorInterface
 
 
     /**
-     * The entire pourpose of this method
-     * is to get the correct API endpoint
-     * it requires a big ass method
-     * because fixer changed it's endpoint a few months ago
-     * we need to verify if the user API is from
-     * the previous endpoint or the new one
-     * and store it in a workflow variable
-     * once the old endpoint stops working completely
-     * we can remove this method and just add
-     * the urls directly in the getRates method
+     * Get the configured exchange data
+     * Returns Frankfurter (free, no key needed) when no Fixer API key is set,
+     * otherwise returns Fixer via API Layer (HTTPS only).
      */
     private function getConfiguredExchangeData()
     {
-        $id = 'fixer';
-        $api_url = "https://api.apilayer.com/fixer/latest";
-        $headers = [];
         $fixer_apikey = $this->getSetting('fixer_apikey');
 
-        if (!empty($fixer_apikey)) {
-            $id = 'fixer';
-            $apiSource = \Alfred\getVariable('fixer_source_api', '');
-            $old_api = "http://data.fixer.io/api/latest?access_key={$fixer_apikey}&format=1";
-            $new_url = 'https://api.apilayer.com/fixer/latest';
-            $new_headers = [
-                "Content-Type: text/plain",
-                "apikey: {$fixer_apikey}",
+        if (empty($fixer_apikey)) {
+            return [
+                'id' => 'frankfurter',
+                'url' => 'https://api.frankfurter.app/latest',
+                'headers' => ['Accept: application/json'],
+                'apiKey' => 'free',
             ];
-
-            // Fixer moved it's API to API layer
-            // old API keys will not work with API Layer and new API Keys
-            // will not work with the old API URL we need to validate
-            // the API key and save the correct source to avoid duplicated
-            // API calls, eventually the old API will stop working
-            // make request to check what's the correct endpoint
-            if (empty($apiSource)) {
-                $req = $this->doRequest($old_api);
-
-                if ($req && !empty($req['success'])) {
-                    $apiSource = 'fixer_io';
-                } else {
-                    // If the API key does not work with the deprecated url, try with the new one
-                    $req = $this->doRequest($new_url, $new_headers);
-                    if ($req && !empty($req['success'])) {
-                        $apiSource = 'fixer_apilayer';
-                    }
-                }
-
-                if (!empty($apiSource)) {
-                    \Alfred\setVariable('fixer_source_api', $apiSource, false);
-                }
-            }
-
-            if ($apiSource === 'fixer_io') {
-                $api_url = $old_api;
-            }
-            if ($apiSource === 'fixer_apilayer') {
-                $api_url = $new_url;
-                $headers = $new_headers;
-            }
         }
 
         return [
-            'id' => $id,
-            'url' => $api_url,
-            'headers' => $headers,
-            'apiKey' => $fixer_apikey
+            'id' => 'fixer',
+            'url' => 'https://api.apilayer.com/fixer/latest',
+            'headers' => [
+                'Content-Type: text/plain',
+                "apikey: {$fixer_apikey}",
+            ],
+            'apiKey' => $fixer_apikey,
         ];
     }
 

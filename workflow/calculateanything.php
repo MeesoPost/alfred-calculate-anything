@@ -608,9 +608,7 @@ class CalculateAnything
         \Alfred\createDir($dir);
 
         $file = $dir . '/' . $from . '-' . $to . '.txt';
-        $file = str_replace(' ', '\ ', $file);
-        $command = "echo \"{$value}\" >> {$file}";
-        shell_exec("{$command}");
+        file_put_contents($file, $value . PHP_EOL, FILE_APPEND);
 
         return true;
     }
@@ -674,8 +672,8 @@ class CalculateAnything
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_FAILONERROR, true);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 
         $req = curl_exec($curl);
