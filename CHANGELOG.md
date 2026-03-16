@@ -1,5 +1,14 @@
 # Changelog
 
+### v4.1.0
+
+- Security: Enabled SSL certificate verification in all HTTP requests (was previously disabled, leaving API calls open to MITM attacks)
+- Security: Replaced `shell_exec` with `file_put_contents` in cache writes (eliminated command injection risk)
+- Improved: Added Frankfurter API (https://api.frankfurter.app) as a free built-in fallback for currency conversion — no API key required, covers 30 major currencies via ECB data
+- Improved: Currency conversion now works out of the box without any setup; configure a Fixer API key only if you need 160+ currencies
+- Improved: Removed legacy plain-HTTP Fixer endpoint (`http://data.fixer.io`) — all requests now use HTTPS only
+- Improved: Graceful error message when a currency is not available in the free tier, with instructions to add a Fixer API key
+
 ### v4.0.7
 
 - Fixed: Removed old file from process
