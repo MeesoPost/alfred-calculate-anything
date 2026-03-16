@@ -304,7 +304,9 @@ return [
     'vat' => [
         'plus' => '+',
         'minus' => '-',
-        'tax' => 'VAT',
+        'btw' => 'BTW',
+        'vat' => 'BTW',
+        'tax' => 'BTW',
 
         'stop_words' => ['of']
     ],

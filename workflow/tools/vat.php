@@ -22,7 +22,7 @@ class Vat extends CalculateAnything implements CalculatorInterface
         $this->lang = $this->getTranslation('vat');
         $this->keywords = $this->getKeywords('vat');
         $this->stop_words = $this->getStopWords('vat');
-        $this->percent = $this->getSetting('vat_percentage', '16%');
+        $this->percent = $this->getSetting('vat_percentage', '21%');
     }
 
 
