@@ -672,6 +672,10 @@ class CalculateAnything
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_FAILONERROR, true);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_MAXREDIRS, 5);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 5);
+        curl_setopt($curl, CURLOPT_TIMEOUT, 15);
         curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, true);
         curl_setopt($curl, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
@@ -680,17 +684,11 @@ class CalculateAnything
 
         if (curl_errno($curl)) {
             $error_msg = curl_error($curl);
-            // print_r('CURL FAILED: request to ' . $to . ' failed, error was ' . $error_msg);
-            $req = ['error' => $error_msg];
-            return $req;
+            return ['error' => $error_msg];
         }
 
-        curl_close($curl);
-
         if (empty($req)) {
-            // print_r('CURL EMPTY RESPONSE: request to ' . $to . ' returned empty ');
-            $req = ['error' => 'CURL EMPTY RESPONSE'];
-            return $req;
+            return ['error' => 'CURL EMPTY RESPONSE'];
         }
 
         try {

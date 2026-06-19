@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sIL \"https://api.frankfurter.app/latest\")",
+      "Bash(curl -s \"https://api.frankfurter.dev/v1/latest\")",
+      "Bash(cat \"/Users/meespost/Library/Application Support/Alfred/Workflow Data/com.alfred.calculateanything/cache/frankfurter/rates.json\" | head -c 400; echo; stat -f \"modified: %Sm\" \"/Users/meespost/Library/Application Support/Alfred/Workflow Data/com.alfred.calculateanything/cache/frankfurter/rates.json\")",
+      "Bash(php -r ' *)",
+      "Bash(ls \"/Users/meespost/Library/Application Support/Alfred/Alfred.alfredpreferences/workflows/user.workflow.40DB558C-C245-4E2B-894B-07E51EA2A738/\" | head -20)",
+      "Bash(readlink \"/Users/meespost/Library/Application Support/Alfred/Alfred.alfredpreferences/workflows/user.workflow.40DB558C-C245-4E2B-894B-07E51EA2A738\"; ls -la \"/Users/meespost/Library/Application Support/Alfred/Alfred.alfredpreferences/workflows/\" | grep 40DB558C)"
+    ]
+  }
+}

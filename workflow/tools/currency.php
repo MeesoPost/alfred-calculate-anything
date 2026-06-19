@@ -681,25 +681,29 @@ class Currency extends CalculateAnything implements CalculatorInterface
         \Alfred\createDir($dir);
 
         $rates_file = $dir . '/rates.json';
+        $cached_rates = null;
 
         if (file_exists($rates_file)) {
             $rates = file_get_contents($rates_file);
             if (!empty($rates)) {
                 $rates = json_decode($rates, true);
-                $updated = isset($rates['last_updated']) ? $rates['last_updated'] : null;
+                if (is_array($rates) && !empty($rates['rates'])) {
+                    $cached_rates = $rates;
+                    $updated = isset($rates['last_updated']) ? $rates['last_updated'] : null;
 
-                if (is_null($updated)) {
-                    $updated = isset($rates['timestamp']) ? $rates['timestamp'] : date(strtotime('today - 3 days'));
-                }
+                    if (is_null($updated)) {
+                        $updated = isset($rates['timestamp']) ? $rates['timestamp'] : strtotime('today - 3 days');
+                    }
 
-                $time = time() - $updated;
+                    $time = time() - (int)$updated;
 
-                // Only return cached rates if cache
-                // has not expired otherwise continue
-                // to fetch the new rates
-                if ($rates['success'] && $time < $cache_seconds) {
-                    self::$rates = $rates;
-                    return $rates;
+                    // Only return cached rates if cache
+                    // has not expired otherwise continue
+                    // to fetch the new rates
+                    if (!empty($rates['success']) && $time < $cache_seconds) {
+                        self::$rates = $rates;
+                        return $rates;
+                    }
                 }
             }
         }
@@ -723,17 +727,18 @@ class Currency extends CalculateAnything implements CalculatorInterface
 
         $rates = $this->doRequest($from, $http_headers);
 
-        if (!empty($rates['error'])) {
-            return [
-                'error' => $rates['error']
-            ];
-        }
+        $fetch_failed = !empty($rates['error']) || empty($rates) || !is_array($rates) || empty($rates['rates']);
 
-        if (empty($rates) || !is_array($rates)) {
-            return [
-                'error' => $this->lang['fetch_error'],
-                'reload' => 0.1,
-            ];
+        if ($fetch_failed) {
+            // Fall back to stale cached rates rather than failing outright,
+            // so the user can still convert when the API is unreachable.
+            if (!empty($cached_rates) && !empty($cached_rates['rates'])) {
+                self::$rates = $cached_rates;
+                return $cached_rates;
+            }
+
+            $error_msg = !empty($rates['error']) ? $rates['error'] : $this->lang['fetch_error'];
+            return ['error' => $error_msg];
         }
 
         // Normalize Frankfurter response to Fixer-compatible format
@@ -768,7 +773,7 @@ class Currency extends CalculateAnything implements CalculatorInterface
         if (empty($fixer_apikey)) {
             return [
                 'id' => 'frankfurter',
-                'url' => 'https://api.frankfurter.app/latest',
+                'url' => 'https://api.frankfurter.dev/v1/latest',
                 'headers' => ['Accept: application/json'],
                 'apiKey' => 'free',
             ];
